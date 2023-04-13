@@ -21,14 +21,17 @@ func main() {
 	r := gin.Default()
 
 	r.Static("/image", "./images")
-
+	//эндпоинт для отправки фотографии
 	r.GET("/image", sendImage)
-
+	//эндпоинт для создания нового user
 	r.POST("/user", newUser)
+	//эндпоинт для получения user по id
 	r.GET("/user/:id", getUser)
-
-	r.GET("/sleep", sleep)
+	//эндпоинт для удаления user по id
 	r.DELETE("/user/:id", deleteUser)
+	//эндпоинт для сна
+	r.GET("/sleep", sleep)
+	
 
 	err := r.Run(":8080")
 	if err != nil {
