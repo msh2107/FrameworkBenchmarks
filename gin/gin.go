@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -21,17 +22,15 @@ func main() {
 	r := gin.Default()
 
 	r.Static("/image", "./images")
-	//эндпоинт для отправки фотографии
 	r.GET("/image", sendImage)
-	//эндпоинт для создания нового user
+
+	r.GET("/users", getUsers)
 	r.POST("/user", newUser)
-	//эндпоинт для получения user по id
 	r.GET("/user/:id", getUser)
-	//эндпоинт для удаления user по id
+	r.PATCH("/user/:id", updateUser)
 	r.DELETE("/user/:id", deleteUser)
-	//эндпоинт для сна
+
 	r.GET("/sleep", sleep)
-	
 
 	err := r.Run(":8080")
 	if err != nil {
@@ -41,32 +40,36 @@ func main() {
 
 func sleep(ctx *gin.Context) {
 	time.Sleep(5 * time.Second)
-	ctx.Writer.WriteString("Вы проспали 5 секунд")
+	_, err := ctx.Writer.WriteString("Вы проспали 5 секунд")
+	if err != nil {
+		return
+	}
 }
 
 func sendImage(ctx *gin.Context) {
 	ctx.Redirect(http.StatusMovedPermanently, "/image/bug.jpg")
 }
 
+func getUsers(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, users)
+}
+
 func newUser(ctx *gin.Context) {
 	var jsonUser user
 	err := ctx.ShouldBindJSON(&jsonUser)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad json",
-		})
+		_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	users = append(users, jsonUser)
+	ctx.JSON(http.StatusOK, jsonUser)
 }
 
 func getUser(ctx *gin.Context) {
 	id := ctx.Param("id")
 	i, err := strconv.Atoi(id)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad id",
-		})
+		_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	for _, user := range users {
@@ -74,33 +77,48 @@ func getUser(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, user)
 			return
 		}
-
 	}
-	ctx.JSON(http.StatusBadRequest, gin.H{
-		"error": "no such user",
-	})
+	_ = ctx.AbortWithError(http.StatusBadRequest, errors.New("no such user"))
 
+}
+
+func updateUser(ctx *gin.Context) {
+	var jsonUser user
+	err := ctx.ShouldBindJSON(&jsonUser)
+	if err != nil {
+		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	id := ctx.Param("id")
+	i, err := strconv.Atoi(id)
+	if err != nil {
+		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	for index, user := range users {
+		if user.Id == i {
+			users[index] = jsonUser
+			ctx.JSON(http.StatusOK, jsonUser)
+			return
+		}
+	}
+	_ = ctx.AbortWithError(http.StatusBadRequest, errors.New("no such user"))
 }
 
 func deleteUser(ctx *gin.Context) {
 	id := ctx.Param("id")
 	i, err := strconv.Atoi(id)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad id",
-		})
+		_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	for index, user := range users {
 		if user.Id == i {
 			ctx.JSON(http.StatusOK, user)
 			users = append(users[:index], users[index+1:]...)
-
 			return
 		}
 
 	}
-	ctx.JSON(http.StatusBadRequest, gin.H{
-		"error": "no such user",
-	})
+	_ = ctx.AbortWithError(http.StatusBadRequest, errors.New("no such user"))
 }
