@@ -27,7 +27,7 @@ func main() {
 	r.GET("/users", getUsers)
 	r.POST("/user", newUser)
 	r.GET("/user/:id", getUser)
-	r.PATCH("/user/:id", updateUser)
+	r.PUT("/user/:id", updateUser)
 	r.DELETE("/user/:id", deleteUser)
 
 	r.GET("/sleep", sleep)
