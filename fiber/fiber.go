@@ -25,7 +25,7 @@ func main() {
 	app.Get("/users", getUsers)
 	app.Post("/user", newUser)
 	app.Get("/user/:id", getUser)
-	app.Patch("/user/:id", updateUser)
+	app.Put("/user/:id", updateUser)
 	app.Delete("/user/:id", deleteUser)
 
 	app.Get("/sleep", sleep)
